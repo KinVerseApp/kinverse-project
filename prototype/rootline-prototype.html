@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rootline — Clickable Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F3ECDC;
+    --parchment-deep:#E9DEC3;
+    --paper:#FBF7ED;
+    --ink:#2A241D;
+    --ink-soft:#6B6154;
+    --ink-faint:#9C9282;
+    --forest:#243B31;
+    --forest-light:#33513F;
+    --clay:#B85C38;
+    --clay-dark:#9A4A2C;
+    --gold:#C79A4B;
+    --sage:#7C9473;
+    --line:#DCCFAE;
+    --line-soft:#EADFC5;
+    --ring:0 0 0 3px rgba(184,92,56,.22);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 12% 8%, #EFE4C9 0%, transparent 45%),
+      radial-gradient(circle at 90% 85%, #E4D5B0 0%, transparent 50%),
+      var(--parchment);
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
+
+  /* ---------- layout shell ---------- */
+  .app-shell{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:44px;
+    min-height:100vh;
+    padding:40px 24px 60px;
+  }
+  .rail{
+    width:252px;
+    flex:0 0 auto;
+    position:sticky;
+    top:40px;
+  }
+  .rail-brand{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:22px;
+  }
+  .rail-brand .mark{
+    width:34px; height:34px; border-radius:50%;
+    background:var(--forest);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .rail-brand .mark svg{width:19px; height:19px; stroke:var(--gold);}
+  .rail-brand span{font-family:'Fraunces', serif; font-size:19px; font-weight:600; letter-spacing:.2px;}
+  .rail-note{font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin-bottom:22px;}
+  .rail-group{margin-bottom:18px;}
+  .rail-group-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--ink-faint); font-weight:600; margin:0 0 8px 2px;
+  }
+  .rail-btn{
+    display:flex; align-items:center; gap:9px;
+    width:100%; text-align:left;
+    background:transparent; border:none; cursor:pointer;
+    padding:7px 9px; border-radius:8px;
+    font-family:'Inter', sans-serif; font-size:13.4px; color:var(--ink-soft);
+    margin-bottom:2px;
+  }
+  .rail-btn:hover{ background:var(--parchment-deep); color:var(--ink); }
+  .rail-btn.active{ background:var(--forest); color:var(--paper); }
+  .rail-btn .num{
+    font-family:'Fraunces', serif; font-size:12px; width:16px; flex:0 0 auto;
+    color:var(--clay); font-weight:600;
+  }
+  .rail-btn.active .num{ color:var(--gold); }
+
+  .stage{ display:flex; flex-direction:column; align-items:center; }
+  .stage-hint{
+    margin-top:18px; font-size:12.5px; color:var(--ink-soft);
+    text-align:center; max-width:300px; line-height:1.5;
+  }
+  .stage-hint b{color:var(--clay-dark);}
+
+  /* ---------- phone frame ---------- */
+  .phone-wrap{ position:relative; }
+  .phone{
+    width:375px; height:812px;
+    background:var(--paper);
+    border-radius:46px;
+    border:10px solid var(--ink);
+    box-shadow:0 30px 60px -20px rgba(36,30,20,.45), 0 0 0 1px rgba(0,0,0,.05);
+    position:relative;
+    overflow:hidden;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:150px; height:26px; background:var(--ink);
+    border-radius:0 0 16px 16px; z-index:50;
+  }
+  .screens{ position:relative; width:100%; height:100%; }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    background:var(--paper);
+    overflow-y:auto;
+  }
+  .screen.active{ display:flex; }
+  .screen::-webkit-scrollbar{ width:0; }
+
+  /* ---------- shared bits ---------- */
+  .status-space{ height:34px; flex:0 0 auto; }
+  .topbar{
+    flex:0 0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 20px 14px;
+  }
+  .topbar h2{ margin:0; font-size:19px; font-weight:600; }
+  .topbar .sub{ font-size:11.5px; color:var(--ink-faint); font-weight:500; letter-spacing:.03em; }
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%;
+    border:1px solid var(--line); background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex:0 0 auto; position:relative;
+  }
+  .icon-btn svg{ width:17px; height:17px; stroke:var(--ink); fill:none; stroke-width:1.7; }
+  .icon-btn .dot{
+    position:absolute; top:-2px; right:-2px; width:9px; height:9px;
+    background:var(--clay); border-radius:50%; border:2px solid var(--paper);
+  }
+  .body-scroll{ flex:1 1 auto; padding:0 20px 24px; overflow-y:auto; }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; letter-spacing:.02em; }
+  .field input, .field select{
+    width:100%; padding:12px 13px; border-radius:11px;
+    border:1.4px solid var(--line); background:var(--paper);
+    font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--clay); box-shadow:var(--ring); }
+
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:14px; border-radius:12px; border:none;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px;
+    cursor:pointer;
+  }
+  .btn-primary{ background:var(--clay); color:#fff; }
+  .btn-primary:active{ background:var(--clay-dark); }
+  .btn-ghost{ background:transparent; color:var(--forest); border:1.4px solid var(--line); }
+  .btn-text{ background:none; border:none; color:var(--ink-soft); font-size:13.5px; cursor:pointer; padding:8px; }
+  .btn-row{ display:flex; flex-direction:column; gap:10px; }
+
+  .back-row{
+    display:flex; align-items:center; gap:12px;
+    padding:6px 20px 6px; flex:0 0 auto;
+  }
+  .back-row .back-btn{
+    width:32px; height:32px; border-radius:50%; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; background:var(--paper); cursor:pointer;
+  }
+  .back-row .back-btn svg{ width:15px; height:15px; stroke:var(--ink); fill:none; stroke-width:2; }
+  .back-row .title{ font-family:'Fraunces',serif; font-size:16.5px; font-weight:600; }
+  .back-row .step{ margin-left:auto; font-size:11.5px; color:var(--ink-faint); font-weight:600; }
+
+  /* ---------- bottom nav ---------- */
+  .bottomnav{
+    flex:0 0 auto;
+    display:flex; justify-content:space-around; align-items:center;
+    padding:10px 8px 16px; border-top:1px solid var(--line-soft);
+    background:var(--paper);
+  }
+  .navitem{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; cursor:pointer; color:var(--ink-faint);
+    font-family:'Inter',sans-serif; font-size:10.3px; font-weight:600; width:64px;
+  }
+  .navitem svg{ width:20px; height:20px; stroke:var(--ink-faint); fill:none; stroke-width:1.7; }
+  .navitem.active{ color:var(--forest); }
+  .navitem.active svg{ stroke:var(--forest); }
+  .navitem .fab{
+    width:40px; height:40px; border-radius:50%; background:var(--clay);
+    display:flex; align-items:center; justify-content:center; margin-top:-22px;
+    box-shadow:0 6px 14px -4px rgba(184,92,56,.6);
+  }
+  .navitem .fab svg{ stroke:#fff; width:18px; height:18px; }
+
+  /* ---------- splash ---------- */
+  #s-splash{ background:var(--forest); align-items:center; justify-content:center; color:var(--paper); }
+  .rings{ width:210px; height:210px; position:relative; margin-bottom:26px; }
+  .rings svg{ width:100%; height:100%; }
+  .splash-word{ font-family:'Fraunces',serif; font-size:30px; font-weight:600; letter-spacing:.01em; }
+  .splash-tag{ font-size:12.5px; color:#C9BFA6; letter-spacing:.14em; text-transform:uppercase; margin-top:8px; }
+  .splash-tap{ position:absolute; bottom:46px; left:0; right:0; text-align:center; font-size:11.5px; color:#8FA396; letter-spacing:.05em; }
+
+  /* ---------- welcome ---------- */
+  #s-welcome .hero{
+    flex:0 0 auto; height:290px; background:var(--forest);
+    display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
+  }
+  #s-welcome .hero svg{ width:190px; height:190px; }
+  #s-welcome .hero .grain{ position:absolute; inset:0; background:radial-gradient(circle at 70% 20%, rgba(199,154,75,.18), transparent 55%); }
+  .welcome-copy{ padding:26px 24px 6px; }
+  .welcome-copy h1{ font-size:25px; margin:0 0 10px; line-height:1.2; }
+  .welcome-copy p{ font-size:13.8px; color:var(--ink-soft); line-height:1.55; margin:0 0 22px; }
+  .welcome-actions{ padding:0 24px 30px; margin-top:auto; }
+  .welcome-actions .btn{ margin-bottom:10px; }
+
+  /* ---------- progress dots (registration) ---------- */
+  .step-dots{ display:flex; gap:5px; padding:0 20px 6px; }
+  .step-dots span{ height:3px; flex:1; background:var(--line); border-radius:2px; }
+  .step-dots span.done{ background:var(--clay); }
+
+  .avatar-upload{ display:flex; flex-direction:column; align-items:center; padding:18px 0 10px; }
+  .avatar-circle{
+    width:104px; height:104px; border-radius:50%; background:var(--parchment-deep);
+    border:1.6px dashed var(--line); display:flex; align-items:center; justify-content:center; margin-bottom:14px;
+  }
+  .avatar-circle svg{ width:34px; height:34px; stroke:var(--ink-faint); fill:none; stroke-width:1.5; }
+  .avatar-upload .cap{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; }
+
+  /* ---------- first time home ---------- */
+  .progress-card{
+    background:var(--paper); border:1.4px solid var(--line); border-radius:16px; padding:18px;
+    margin:6px 0 20px;
+  }
+  .progress-card .label-row{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft); margin-bottom:8px; font-weight:600; }
+  .progress-track{ height:7px; background:var(--parchment-deep); border-radius:6px; overflow:hidden; }
+  .progress-fill{ height:100%; background:linear-gradient(90deg,var(--clay),var(--gold)); border-radius:6px; }
+  .checklist{ list-style:none; padding:0; margin:16px 0 0; }
+  .checklist li{ display:flex; align-items:center; gap:11px; padding:9px 0; font-size:14px; border-bottom:1px solid var(--line-soft); }
+  .checklist li:last-child{ border-bottom:none; }
+  .chk{ width:20px; height:20px; border-radius:50%; border:1.6px solid var(--line); flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  .chk.done{ background:var(--sage); border-color:var(--sage); }
+  .chk.done svg{ width:11px; height:11px; stroke:#fff; fill:none; stroke-width:3; }
+  .checklist li.done{ color:var(--ink-faint); text-decoration:line-through; }
+
+  /* ---------- dashboard ---------- */
+  .snapshot{
+    background:var(--forest); border-radius:18px; padding:20px; color:var(--paper); margin:4px 0 22px;
+    position:relative; overflow:hidden;
+  }
+  .snapshot::after{ content:""; position:absolute; right:-30px; top:-30px; width:130px; height:130px; border-radius:50%; border:1px solid rgba(199,154,75,.25); }
+  .snapshot .label{ font-size:11.5px; letter-spacing:.06em; color:#B9C9BD; text-transform:uppercase; margin-bottom:12px; }
+  .snapshot .stats{ display:flex; gap:22px; }
+  .snapshot .stat b{ display:block; font-family:'Fraunces',serif; font-size:23px; font-weight:600; }
+  .snapshot .stat span{ font-size:11px; color:#AEC0B3; }
+  .section-label{ font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; }
+  .quick-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:26px; }
+  .quick-btn{
+    display:flex; flex-direction:column; gap:10px; align-items:flex-start;
+    background:var(--paper); border:1.4px solid var(--line); border-radius:14px; padding:15px; cursor:pointer;
+    font-family:'Inter',sans-serif; text-align:left;
+  }
+  .quick-btn .qicon{ width:32px; height:32px; border-radius:9px; background:var(--parchment-deep); display:flex; align-items:center; justify-content:center; }
+  .quick-btn .qicon svg{ width:16px; height:16px; stroke:var(--forest); fill:none; stroke-width:1.8; }
+  .quick-btn b{ font-size:13.3px; font-weight:600; }
+  .activity-item{ display:flex; align-items:flex-start; gap:11px; padding:10px 0; border-bottom:1px solid var(--line-soft); font-size:13.4px; }
+  .activity-item:last-child{ border:none; }
+  .activity-dot{ width:7px; height:7px; border-radius:50%; background:var(--clay); margin-top:6px; flex:0 0 auto; }
+  .activity-item .t{ color:var(--ink-faint); font-size:11.5px; display:block; margin-top:2px; }
+
+  /* ---------- tree screen ---------- */
+  .tree-canvas{ padding:8px 20px 6px; }
+  .node{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:10px 6px; border-radius:14px; cursor:pointer; width:84px;
+    background:transparent; border:none; font-family:'Inter',sans-serif;
+  }
+  .node .av{
+    width:52px; height:52px; border-radius:50%; background:var(--parchment-deep);
+    border:1.6px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:600; font-size:16px; color:var(--forest);
+  }
+  .node.you .av{ background:var(--forest); color:var(--gold); border-color:var(--forest); }
+  .node .nm{ font-size:12px; font-weight:600; line-height:1.2; text-align:center; }
+  .node .rl{ font-size:10.5px; color:var(--ink-faint); }
+  .gen-row{ display:flex; justify-content:center; gap:6px; }
+  .connector{ width:1.6px; height:22px; background:var(--line); margin:0 auto; }
+  .connector-h{ height:1.6px; background:var(--line); }
+  .branch-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:24px; padding:0 4px; justify-content:center; }
+  .chip{
+    display:flex; align-items:center; gap:6px; padding:9px 14px; border-radius:999px;
+    background:var(--paper); border:1.4px solid var(--line); font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .chip svg{ width:13px; height:13px; stroke:var(--clay); fill:none; stroke-width:2; }
+  .fab-add{
+    position:absolute; right:20px; bottom:96px; width:52px; height:52px; border-radius:50%;
+    background:var(--clay); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 10px 20px -6px rgba(184,92,56,.55); z-index:20;
+  }
+  .fab-add svg{ width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.2; }
+  .pinch-note{ text-align:center; font-size:11px; color:var(--ink-faint); margin:18px 0 4px; letter-spacing:.03em; }
+  .zoom-controls{ position:absolute; right:20px; bottom:96px; display:flex; flex-direction:column; gap:8px; z-index:20; }
+  .zoom-controls button{ width:38px; height:38px; border-radius:10px; border:1.4px solid var(--line); background:var(--paper); font-size:17px; cursor:pointer; color:var(--ink); }
+
+  /* ---------- overlay / sheet / drawer ---------- */
+  .overlay{ position:absolute; inset:0; background:rgba(36,30,20,.42); opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:60; }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; background:var(--paper);
+    border-radius:22px 22px 0 0; padding:10px 22px 26px; z-index:70;
+    transform:translateY(105%); transition:transform .22s cubic-bezier(.25,.9,.3,1);
+    box-shadow:0 -12px 30px rgba(0,0,0,.15);
+  }
+  .sheet.show{ transform:translateY(0); }
+  .sheet .grabber{ width:38px; height:4px; background:var(--line); border-radius:3px; margin:6px auto 16px; }
+  .sheet-profile-head{ display:flex; flex-direction:column; align-items:center; padding-bottom:16px; border-bottom:1px solid var(--line-soft); margin-bottom:16px; }
+  .sheet-profile-head .av{ width:74px; height:74px; border-radius:50%; background:var(--parchment-deep); border:1.6px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:24px; font-weight:600; color:var(--forest); margin-bottom:12px; }
+  .sheet-profile-head h3{ margin:0 0 3px; font-size:18px; }
+  .sheet-profile-head .rel{ font-size:12.5px; color:var(--clay-dark); font-weight:600; margin-bottom:3px; }
+  .sheet-profile-head .loc{ font-size:12px; color:var(--ink-faint); }
+
+  .drawer{
+    position:absolute; top:0; bottom:0; left:0; width:260px; background:var(--forest); color:var(--paper);
+    z-index:80; transform:translateX(-105%); transition:transform .22s cubic-bezier(.25,.9,.3,1);
+    padding:50px 22px 26px; display:flex; flex-direction:column;
+  }
+  .drawer.show{ transform:translateX(0); }
+  .drawer .dname{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 2px; }
+  .drawer .demail{ font-size:11.5px; color:#B9C9BD; margin-bottom:26px; }
+  .drawer-item{
+    display:flex; align-items:center; gap:12px; padding:12px 4px; background:none; border:none; cursor:pointer;
+    color:#E7E1CF; font-family:'Inter',sans-serif; font-size:14px; text-align:left; border-radius:8px;
+  }
+  .drawer-item svg{ width:17px; height:17px; stroke:#C9BFA6; fill:none; stroke-width:1.7; }
+  .drawer-item:hover{ background:rgba(255,255,255,.06); }
+  .drawer-item.signout{ margin-top:auto; color:#D3876C; }
+  .drawer-item.signout svg{ stroke:#D3876C; }
+
+  /* ---------- add relative ---------- */
+  .rel-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+  .rel-opt{
+    padding:13px 10px; border-radius:12px; border:1.4px solid var(--line); background:var(--paper);
+    text-align:center; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .rel-opt.sel{ background:var(--forest); border-color:var(--forest); color:var(--gold); }
+
+  /* ---------- invite ---------- */
+  .invite-target{ display:flex; align-items:center; gap:12px; padding:16px; border:1.4px solid var(--line); border-radius:14px; margin:6px 0 22px; }
+  .invite-target .av{ width:44px; height:44px; border-radius:50%; background:var(--parchment-deep); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:600; color:var(--forest); }
+  .send-via{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+  .via-opt{ display:flex; align-items:center; gap:12px; padding:13px 14px; border:1.4px solid var(--line); border-radius:12px; cursor:pointer; font-size:13.8px; font-weight:600; }
+  .via-opt.sel{ border-color:var(--clay); background:#FBEDE5; }
+  .via-opt svg{ width:18px; height:18px; stroke:var(--forest); fill:none; stroke-width:1.7; }
+
+  /* ---------- notifications ---------- */
+  .notif-item{ display:flex; gap:13px; padding:14px 0; border-bottom:1px solid var(--line-soft); }
+  .notif-item:last-child{ border:none; }
+  .notif-ic{ width:36px; height:36px; border-radius:10px; background:var(--parchment-deep); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .notif-ic svg{ width:17px; height:17px; stroke:var(--clay); fill:none; stroke-width:1.8; }
+  .notif-item .txt{ font-size:13.6px; line-height:1.4; }
+  .notif-item .txt span{ display:block; font-size:11.3px; color:var(--ink-faint); margin-top:3px; }
+
+  /* ---------- search ---------- */
+  .search-bar{ display:flex; align-items:center; gap:9px; background:var(--parchment-deep); border-radius:12px; padding:11px 14px; margin:4px 0 20px; }
+  .search-bar svg{ width:16px; height:16px; stroke:var(--ink-faint); fill:none; stroke-width:1.8; }
+  .search-bar input{ border:none; background:none; font-family:'Inter',sans-serif; font-size:14px; width:100%; color:var(--ink); }
+  .search-bar input:focus{ outline:none; }
+  .result-item{ display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:1px solid var(--line-soft); cursor:pointer; }
+  .result-item .av{ width:42px; height:42px; border-radius:50%; background:var(--parchment-deep); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:600; color:var(--forest); }
+  .result-item .nm{ font-size:14px; font-weight:600; }
+  .result-item .path{ font-size:11.6px; color:var(--ink-faint); margin-top:2px; }
+
+  /* ---------- profile / privacy ---------- */
+  .profile-head{ display:flex; flex-direction:column; align-items:center; padding:8px 0 24px; }
+  .profile-head .av{ width:92px; height:92px; border-radius:50%; background:var(--parchment-deep); border:1.6px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:28px; font-weight:600; color:var(--forest); margin-bottom:13px; }
+  .list-row{ display:flex; align-items:center; justify-content:space-between; padding:15px 2px; border-bottom:1px solid var(--line-soft); cursor:pointer; }
+  .list-row .l{ display:flex; align-items:center; gap:12px; font-size:14.5px; font-weight:600; }
+  .list-row svg.leading{ width:17px; height:17px; stroke:var(--forest); fill:none; stroke-width:1.7; }
+  .list-row svg.chev{ width:14px; height:14px; stroke:var(--ink-faint); fill:none; stroke-width:2; }
+  .privacy-group{ margin-bottom:26px; }
+  .privacy-group h4{ font-size:13px; margin:0 0 10px; font-weight:700; }
+  .radio-opt{ display:flex; align-items:center; gap:11px; padding:9px 2px; font-size:13.6px; cursor:pointer; }
+  .radio-opt .r{ width:18px; height:18px; border-radius:50%; border:1.6px solid var(--line); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .radio-opt .r.sel{ border-color:var(--clay); }
+  .radio-opt .r.sel::after{ content:""; width:9px; height:9px; border-radius:50%; background:var(--clay); }
+
+  /* full profile */
+  .fp-photo{ height:180px; background:var(--forest); display:flex; align-items:center; justify-content:center; margin:0 -20px 18px; }
+  .fp-photo .av{ width:88px; height:88px; border-radius:50%; background:rgba(255,255,255,.1); border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:26px; color:var(--gold); }
+  .fp-row{ display:flex; justify-content:space-between; padding:13px 0; border-bottom:1px solid var(--line-soft); font-size:13.8px; }
+  .fp-row span:first-child{ color:var(--ink-soft); }
+  .fp-row span:last-child{ font-weight:600; }
+
+  .toast{
+    position:absolute; left:50%; bottom:100px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--paper); padding:11px 18px; border-radius:10px; font-size:12.8px;
+    opacity:0; pointer-events:none; transition:all .22s ease; z-index:90; white-space:nowrap; font-weight:600;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:900px){
+    .app-shell{ flex-direction:column; align-items:center; padding:20px 14px 50px; }
+    .rail{ width:100%; max-width:375px; position:static; }
+    .rail-group{ margin-bottom:10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- icon sprite -->
+<svg style="display:none">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7M6 10v9h5v-6h2v6h5v-9" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.4"/><circle cx="6" cy="13" r="2.4"/><circle cx="18" cy="13" r="2.4"/><path d="M12 7.4V11M12 11 6 13m6-2 6 2M6 15.4V19M18 15.4V19" stroke-linecap="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 1 1 12 0c0 4 1.4 5.4 1.4 5.4H4.6S6 14 6 10Z" stroke-linejoin="round"/><path d="M10 18.4a2 2 0 0 0 4 0" stroke-linecap="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 19.4a7.2 7.2 0 0 1 14.4 0" stroke-linecap="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m19 19-4.3-4.3" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 6.5 8 6.4 8-6.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sms" viewBox="0 0 24 24"><path d="M4 5.5h16v11H9l-3.5 3v-3H4z" stroke-linejoin="round"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5M8.2 11.8 6 14a3.6 3.6 0 0 0 5.1 5.1l2.2-2.2M15.8 12.2 18 10a3.6 3.6 0 0 0-5.1-5.1L10.7 7.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.4"/></symbol>
+  <symbol id="i-cake" viewBox="0 0 24 24"><path d="M4 20v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6M4 20h16M8 12V9M12 12V9M16 12V9M12 3.5v2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><path d="M7 4v9a4 4 0 0 0 4 4h3M7 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM17 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 19 6.4V11c0 5-3 8.3-7 9.5-4-1.2-7-4.5-7-9.5V6.4Z" stroke-linejoin="round"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.2a2.4 2.4 0 1 1 3.4 2.2c-.9.5-1 .9-1 2" stroke-linecap="round"/><circle cx="12" cy="16.7" r=".25" fill="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="i-signout" viewBox="0 0 24 24"><path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9M15 16l4-4-4-4M19 12H9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-refer" viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.6"/><circle cx="16" cy="9" r="2.6"/><path d="M2.6 19a5.4 5.4 0 0 1 10.8 0M10.6 19a5.4 5.4 0 0 1 10.8 0" stroke-linecap="round"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h16M6 15.5 16 5.5l2.5 2.5L8.5 18H6z" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="app-shell">
+
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><use href="#i-tree"/></svg></div>
+      <span>Rootline</span>
+    </div>
+    <div class="rail-note">Clickable prototype — 19 screens. Everything below jumps straight there; inside the phone, tap like a real app.</div>
+
+    <div class="rail-group">
+      <div class="rail-group-label">Onboarding</div>
+      <button class="rail-btn" data-nav="splash"><span class="num">01</span>Splash</button>
+      <button class="rail-btn" data-nav="welcome"><span class="num">02</span>Welcome</button>
+      <button class="rail-btn" data-nav="reg1"><span class="num">03</span>Register · Step 1</button>
+      <button class="rail-btn" data-nav="reg2"><span class="num">04</span>Register · Step 2</button>
+      <button class="rail-btn" data-nav="reg3"><span class="num">05</span>Register · Step 3</button>
+      <button class="rail-btn" data-nav="reg4"><span class="num">06</span>Register · Step 4</button>
+      <button class="rail-btn" data-nav="firstHome"><span class="num">07</span>First-Time Home</button>
+    </div>
+
+    <div class="rail-group">
+      <div class="rail-group-label">Core app</div>
+      <button class="rail-btn" data-nav="dashboard"><span class="num">08</span>Dashboard</button>
+      <button class="rail-btn" data-nav="tree"><span class="num">09</span>Family Tree</button>
+      <button class="rail-btn" data-nav="treeExpanded"><span class="num">10</span>Expanded Tree</button>
+      <button class="rail-btn" data-nav="tree" data-then-sheet="1"><span class="num">11</span>Relative Card (sheet)</button>
+      <button class="rail-btn" data-nav="fullProfile"><span class="num">12</span>Full Profile</button>
+      <button class="rail-btn" data-nav="addRelative"><span class="num">13</span>Add Relative</button>
+      <button class="rail-btn" data-nav="inviteConfirm"><span class="num">14</span>Invitation</button>
+    </div>
+
+    <div class="rail-group">
+      <div class="rail-group-label">Stay connected</div>
+      <button class="rail-btn" data-nav="notifications"><span class="num">15</span>Notifications</button>
+      <button class="rail-btn" data-nav="search"><span class="num">16</span>Search</button>
+      <button class="rail-btn" data-nav="myProfile"><span class="num">17</span>My Profile</button>
+      <button class="rail-btn" data-nav="privacy"><span class="num">18</span>Privacy Settings</button>
+      <button class="rail-btn" data-nav="dashboard" data-then-drawer="1"><span class="num">19</span>Side Menu</button>
+    </div>
+  </aside>
+
+  <div class="stage">
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screens">
+
+          <!-- 1 SPLASH -->
+          <section class="screen" id="s-splash" onclick="go('welcome')">
+            <div class="rings">
+              <svg viewBox="0 0 120 120" fill="none">
+                <circle cx="60" cy="60" r="52" stroke="#3E5747" stroke-width="1.2"/>
+                <circle cx="60" cy="60" r="40" stroke="#4C6B56" stroke-width="1.2"/>
+                <circle cx="60" cy="60" r="28" stroke="#5A7D63" stroke-width="1.2"/>
+                <circle cx="60" cy="60" r="16" stroke="var(--gold)" stroke-width="1.6"/>
+                <path d="M60 44v32M60 60 50 52M60 60l12-6M60 60l-8 10M60 60l10 8" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="splash-word">Rootline</div>
+            <div class="splash-tag">Discover your roots</div>
+            <div class="splash-tap">Tap anywhere to continue</div>
+          </section>
+
+          <!-- 2 WELCOME -->
+          <section class="screen" id="s-welcome">
+            <div class="hero">
+              <div class="grain"></div>
+              <svg viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="60" r="16" stroke="var(--gold)" stroke-width="1.6"/>
+                <circle cx="65" cy="100" r="14" stroke="#7C9473" stroke-width="1.6"/>
+                <circle cx="135" cy="100" r="14" stroke="#7C9473" stroke-width="1.6"/>
+                <circle cx="45" cy="145" r="11" stroke="#4C6B56" stroke-width="1.4"/>
+                <circle cx="90" cy="150" r="11" stroke="#4C6B56" stroke-width="1.4"/>
+                <circle cx="135" cy="150" r="11" stroke="#4C6B56" stroke-width="1.4"/>
+                <path d="M100 76v14M65 114v16M135 114v16M83 100 82 111M117 100l1 11" stroke="#8FA396" stroke-width="1.4"/>
+              </svg>
+            </div>
+            <div class="welcome-copy">
+              <h1>Build your family tree</h1>
+              <p>Connect generations, preserve your family's story, and keep everyone in one place.</p>
+            </div>
+            <div class="welcome-actions">
+              <button class="btn btn-primary" onclick="go('reg1')">Create account</button>
+              <button class="btn btn-ghost" onclick="go('dashboard')">Sign in</button>
+            </div>
+          </section>
+
+          <!-- 3 REG STEP 1 -->
+          <section class="screen" id="s-reg1">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('welcome')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Create account</span>
+              <span class="step">Step 1 / 4</span>
+            </div>
+            <div class="step-dots"><span class="done"></span><span></span><span></span><span></span></div>
+            <div class="body-scroll">
+              <div style="height:14px"></div>
+              <div class="field"><label>Full name</label><input placeholder="e.g. Sunil Narayanan"></div>
+              <div class="field"><label>Email</label><input placeholder="you@email.com"></div>
+              <div class="field"><label>Mobile number</label><input placeholder="+1 (___) ___ ____"></div>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="go('reg2')">Next</button></div>
+          </section>
+
+          <!-- 4 REG STEP 2 -->
+          <section class="screen" id="s-reg2">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('reg1')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Create account</span>
+              <span class="step">Step 2 / 4</span>
+            </div>
+            <div class="step-dots"><span class="done"></span><span class="done"></span><span></span><span></span></div>
+            <div class="body-scroll">
+              <div class="avatar-upload">
+                <div class="avatar-circle"><svg viewBox="0 0 24 24"><use href="#i-camera"/></svg></div>
+                <div class="cap">Add a profile photo so relatives recognize you</div>
+                <div class="btn-row" style="width:100%">
+                  <button class="btn btn-ghost" onclick="toast('Camera would open here')">Take photo</button>
+                  <button class="btn btn-ghost" onclick="toast('Photo picker would open here')">Upload from device</button>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 20px 12px"><button class="btn btn-primary" onclick="go('reg3')">Next</button></div>
+            <div style="text-align:center; padding-bottom:22px"><button class="btn-text" onclick="go('reg3')">Skip for now</button></div>
+          </section>
+
+          <!-- 5 REG STEP 3 -->
+          <section class="screen" id="s-reg3">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('reg2')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Create account</span>
+              <span class="step">Step 3 / 4</span>
+            </div>
+            <div class="step-dots"><span class="done"></span><span class="done"></span><span class="done"></span><span></span></div>
+            <div class="body-scroll">
+              <div style="height:14px"></div>
+              <div class="field"><label>Date of birth</label><input placeholder="MM / DD / YYYY"></div>
+              <div class="field"><label>Gender</label>
+                <select><option>Prefer not to say</option><option>Female</option><option>Male</option><option>Non-binary</option></select>
+              </div>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="go('reg4')">Next</button></div>
+          </section>
+
+          <!-- 6 REG STEP 4 -->
+          <section class="screen" id="s-reg4">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('reg3')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Create account</span>
+              <span class="step">Step 4 / 4</span>
+            </div>
+            <div class="step-dots"><span class="done"></span><span class="done"></span><span class="done"></span><span class="done"></span></div>
+            <div class="body-scroll">
+              <p style="font-size:12.8px; color:var(--ink-soft); margin:14px 0 18px;">Where your family comes from — this helps relatives find the right branch.</p>
+              <div class="field"><label>Country</label><select><option>India</option><option>United States</option><option>United Kingdom</option><option>Other</option></select></div>
+              <div class="field"><label>State / Region</label><select><option>Tamil Nadu</option><option>New Jersey</option><option>Other</option></select></div>
+              <div class="field"><label>Village / Town of origin</label><select><option>Add your ancestral village</option></select></div>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="go('firstHome')">Finish</button></div>
+          </section>
+
+          <!-- 7 FIRST TIME HOME -->
+          <section class="screen" id="s-firstHome">
+            <div class="status-space"></div>
+            <div class="topbar">
+              <div><h2>Welcome, Sunil</h2><div class="sub">Let's start your tree</div></div>
+              <button class="icon-btn" onclick="go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg><span class="dot"></span></button>
+            </div>
+            <div class="body-scroll">
+              <div class="progress-card">
+                <div class="label-row"><span>Family tree progress</span><span>20%</span></div>
+                <div class="progress-track"><div class="progress-fill" style="width:20%"></div></div>
+                <ul class="checklist">
+                  <li class="done"><span class="chk done"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>Profile created</li>
+                  <li><span class="chk"></span>Add parents</li>
+                  <li><span class="chk"></span>Add siblings</li>
+                  <li><span class="chk"></span>Add spouse</li>
+                  <li><span class="chk"></span>Invite a relative</li>
+                </ul>
+              </div>
+              <p style="font-size:12.8px; color:var(--ink-soft); line-height:1.55;">A tree starts with one branch. Add someone close to you first — you can fill in the rest later.</p>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="go('addRelative')">Add first relative</button></div>
+          </section>
+
+          <!-- 8 DASHBOARD -->
+          <section class="screen" id="s-dashboard">
+            <div class="status-space"></div>
+            <div class="topbar">
+              <button class="icon-btn" onclick="openDrawer()"><svg viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+              <div style="text-align:center"><h2 style="font-size:17px">Hello, Sunil</h2></div>
+              <button class="icon-btn" onclick="go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg><span class="dot"></span></button>
+            </div>
+            <div class="body-scroll">
+              <div class="snapshot">
+                <div class="label">Family snapshot</div>
+                <div class="stats">
+                  <div class="stat"><b>24</b><span>Members</span></div>
+                  <div class="stat"><b>4</b><span>Generations</span></div>
+                  <div class="stat"><b>3</b><span>Pending invites</span></div>
+                </div>
+              </div>
+              <div class="section-label">Quick actions</div>
+              <div class="quick-grid">
+                <button class="quick-btn" onclick="go('addRelative')"><span class="qicon"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></span><b>Add relative</b></button>
+                <button class="quick-btn" onclick="go('tree')"><span class="qicon"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg></span><b>Open tree</b></button>
+                <button class="quick-btn" onclick="go('inviteConfirm')"><span class="qicon"><svg viewBox="0 0 24 24"><use href="#i-mail"/></svg></span><b>Invite</b></button>
+                <button class="quick-btn" onclick="go('notifications')"><span class="qicon"><svg viewBox="0 0 24 24"><use href="#i-cake"/></svg></span><b>Birthdays</b></button>
+              </div>
+              <div class="section-label">Recent activity</div>
+              <div class="activity-item"><span class="activity-dot"></span><div>Ravi joined the family tree<span class="t">2 hours ago</span></div></div>
+              <div class="activity-item"><span class="activity-dot"></span><div>Anita accepted your invite<span class="t">Yesterday</span></div></div>
+              <div class="activity-item"><span class="activity-dot"></span><div>New relative added to the Kumar branch<span class="t">2 days ago</span></div></div>
+            </div>
+            <nav class="bottomnav">
+              <button class="navitem active"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Home</button>
+              <button class="navitem" onclick="go('tree')"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg>Tree</button>
+              <button class="navitem" onclick="go('addRelative')"><span class="fab"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></button>
+              <button class="navitem" onclick="go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg>Activity</button>
+              <button class="navitem" onclick="go('myProfile')"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</button>
+            </nav>
+          </section>
+
+          <!-- 9 TREE -->
+          <section class="screen" id="s-tree" style="position:relative; display:flex;">
+            <div class="status-space"></div>
+            <div class="topbar">
+              <h2>Family tree</h2>
+              <button class="icon-btn" onclick="go('search')"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></button>
+            </div>
+            <div class="body-scroll">
+              <div class="tree-canvas">
+                <div class="gen-row"><button class="node" onclick="openSheet('John Smith','Father','New Jersey')"><span class="av">JS</span><span class="nm">John Smith</span><span class="rl">Father</span></button></div>
+                <div class="connector"></div>
+                <div class="gen-row">
+                  <button class="node" onclick="openSheet('Mary Smith','Mother','New Jersey')"><span class="av">MS</span><span class="nm">Mary Smith</span><span class="rl">Mother</span></button>
+                  <button class="node you" onclick="openSheet('Sunil Narayanan','You','New Jersey')"><span class="av">SN</span><span class="nm">You</span><span class="rl">&nbsp;</span></button>
+                  <button class="node" onclick="openSheet('Priya Narayanan','Spouse','New Jersey')"><span class="av">PN</span><span class="nm">Priya</span><span class="rl">Spouse</span></button>
+                </div>
+                <div class="connector"></div>
+                <div class="gen-row">
+                  <button class="node" onclick="openSheet('Arjun Narayanan','Son','New Jersey')"><span class="av">AN</span><span class="nm">Arjun</span><span class="rl">Son</span></button>
+                  <button class="node" onclick="openSheet('Meera Narayanan','Daughter','New Jersey')"><span class="av">MN</span><span class="nm">Meera</span><span class="rl">Daughter</span></button>
+                </div>
+              </div>
+              <div class="branch-chips">
+                <button class="chip" onclick="go('treeExpanded')"><svg viewBox="0 0 24 24"><use href="#i-branch"/></svg>Grandparents +12</button>
+                <button class="chip" onclick="go('treeExpanded')"><svg viewBox="0 0 24 24"><use href="#i-branch"/></svg>Cousins +48</button>
+                <button class="chip" onclick="go('treeExpanded')"><svg viewBox="0 0 24 24"><use href="#i-branch"/></svg>In-laws +22</button>
+              </div>
+              <div class="pinch-note">Tap a branch to expand · pinch to zoom</div>
+            </div>
+            <div class="fab-add" onclick="go('addRelative')"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></div>
+            <nav class="bottomnav">
+              <button class="navitem" onclick="go('dashboard')"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Home</button>
+              <button class="navitem active"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg>Tree</button>
+              <button class="navitem" onclick="go('addRelative')"><span class="fab"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></button>
+              <button class="navitem" onclick="go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg>Activity</button>
+              <button class="navitem" onclick="go('myProfile')"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</button>
+            </nav>
+          </section>
+
+          <!-- 10 EXPANDED TREE -->
+          <section class="screen" id="s-treeExpanded" style="position:relative;">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('tree')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Grandparents branch</span>
+              <button class="icon-btn" style="margin-left:auto" onclick="go('search')"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></button>
+            </div>
+            <div class="body-scroll">
+              <div class="tree-canvas">
+                <div class="gen-row"><button class="node" onclick="openSheet('Ramesh Kumar','Grandfather','Chennai, India')"><span class="av">RK</span><span class="nm">Ramesh</span><span class="rl">G-Father</span></button></div>
+                <div class="connector"></div>
+                <div class="gen-row">
+                  <button class="node" onclick="openSheet('Lakshmi Kumar','Grandmother','Chennai, India')"><span class="av">LK</span><span class="nm">Lakshmi</span><span class="rl">G-Mother</span></button>
+                  <button class="node you" onclick="openSheet('John Smith','Father','New Jersey')"><span class="av">JS</span><span class="nm">John</span><span class="rl">Father</span></button>
+                  <button class="node" onclick="openSheet('Deepa Rao','Aunt','Bangalore, India')"><span class="av">DR</span><span class="nm">Deepa</span><span class="rl">Aunt</span></button>
+                </div>
+                <div class="connector"></div>
+                <div class="gen-row">
+                  <button class="node" onclick="openSheet('Sunil Narayanan','You','New Jersey')"><span class="av">SN</span><span class="nm">You</span><span class="rl">&nbsp;</span></button>
+                  <button class="node" onclick="openSheet('Kiran Rao','Cousin','Bangalore, India')"><span class="av">KR</span><span class="nm">Kiran</span><span class="rl">Cousin</span></button>
+                </div>
+              </div>
+              <div class="pinch-note">Pinch to zoom · drag to pan</div>
+            </div>
+            <div class="zoom-controls"><button onclick="toast('Zoomed in')">+</button><button onclick="toast('Zoomed out')">–</button></div>
+            <div class="fab-add" onclick="go('addRelative')"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></div>
+          </section>
+
+          <!-- 12 FULL PROFILE -->
+          <section class="screen" id="s-fullProfile">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title" id="fp-name">John Smith</span>
+            </div>
+            <div class="body-scroll">
+              <div class="fp-photo"><span class="av" id="fp-initials">JS</span></div>
+              <div class="fp-row"><span>Relationship</span><span id="fp-rel">Father</span></div>
+              <div class="fp-row"><span>Birthday</span><span>June 25</span></div>
+              <div class="fp-row"><span>Location</span><span id="fp-loc">New Jersey</span></div>
+              <div class="fp-row"><span>Occupation</span><span>Civil Engineer</span></div>
+              <div style="height:22px"></div>
+              <div class="btn-row">
+                <button class="btn btn-primary" onclick="go('addRelative')">Add relative</button>
+                <button class="btn btn-ghost" onclick="toast('Relationship editor would open here')">Edit relationship</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 13 ADD RELATIVE -->
+          <section class="screen" id="s-addRelative">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Add relative</span>
+            </div>
+            <div class="body-scroll">
+              <div style="height:8px"></div>
+              <div class="field"><label>Name</label><input placeholder="Full name"></div>
+              <div class="field"><label>Phone</label><input placeholder="Optional"></div>
+              <div class="field"><label>Email</label><input placeholder="Optional"></div>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:9px;">Relationship</label>
+              <div class="rel-grid">
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Father')">Father</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Mother')">Mother</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Brother')">Brother</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Sister')">Sister</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Son')">Son</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Daughter')">Daughter</button>
+                <button class="rel-opt" data-rel-opt onclick="pickRel(this,'Spouse')">Spouse</button>
+              </div>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="go('inviteConfirm')">Save</button></div>
+          </section>
+
+          <!-- 14 INVITE CONFIRM -->
+          <section class="screen" id="s-inviteConfirm">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Invite relative</span>
+            </div>
+            <div class="body-scroll">
+              <div style="height:10px"></div>
+              <div class="invite-target"><span class="av">JS</span><div><div style="font-weight:600; font-size:14.5px;">Invite John Smith</div><div style="font-size:12px; color:var(--ink-faint);">They'll be added as Father</div></div></div>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:10px;">Send via</label>
+              <div class="send-via">
+                <button class="via-opt sel" onclick="pickVia(this)"><svg viewBox="0 0 24 24"><use href="#i-sms"/></svg>Text message</button>
+                <button class="via-opt" onclick="pickVia(this)"><svg viewBox="0 0 24 24"><use href="#i-mail"/></svg>Email</button>
+                <button class="via-opt" onclick="pickVia(this)"><svg viewBox="0 0 24 24"><use href="#i-link"/></svg>Copy invite link</button>
+              </div>
+            </div>
+            <div style="padding:0 20px 26px"><button class="btn btn-primary" onclick="sendInvite()">Send invitation</button></div>
+          </section>
+
+          <!-- 15 NOTIFICATIONS -->
+          <section class="screen" id="s-notifications">
+            <div class="status-space"></div>
+            <div class="topbar"><h2>Notifications</h2><span></span></div>
+            <div class="body-scroll">
+              <div class="notif-item"><span class="notif-ic"><svg viewBox="0 0 24 24"><use href="#i-cake"/></svg></span><div class="txt">Ravi's birthday is tomorrow<span>Send a note before you forget</span></div></div>
+              <div class="notif-item"><span class="notif-ic"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="txt">Anita joined the tree<span>Accepted your invitation · 1d ago</span></div></div>
+              <div class="notif-item"><span class="notif-ic"><svg viewBox="0 0 24 24"><use href="#i-branch"/></svg></span><div class="txt">New branch created<span>Kumar family · 2d ago</span></div></div>
+              <div class="notif-item"><span class="notif-ic"><svg viewBox="0 0 24 24"><use href="#i-mail"/></svg></span><div class="txt">Invitation accepted<span>John Smith is now connected · 3d ago</span></div></div>
+            </div>
+            <nav class="bottomnav">
+              <button class="navitem" onclick="go('dashboard')"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Home</button>
+              <button class="navitem" onclick="go('tree')"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg>Tree</button>
+              <button class="navitem" onclick="go('addRelative')"><span class="fab"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></button>
+              <button class="navitem active"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg>Activity</button>
+              <button class="navitem" onclick="go('myProfile')"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</button>
+            </nav>
+          </section>
+
+          <!-- 16 SEARCH -->
+          <section class="screen" id="s-search">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Search family</span>
+            </div>
+            <div class="body-scroll">
+              <div class="search-bar"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg><input placeholder="Search a name..."></div>
+              <div class="result-item" onclick="viewProfile('John Smith','Brother > Son','New Jersey')"><span class="av">JS</span><div><div class="nm">John Smith</div><div class="path">You &gt; Brother &gt; Son</div></div></div>
+              <div class="result-item" onclick="viewProfile('Ravi Kumar','Cousin','Chennai, India')"><span class="av">RK</span><div><div class="nm">Ravi Kumar</div><div class="path">You &gt; Cousin</div></div></div>
+              <div class="result-item" onclick="viewProfile('Anita Rao','Second cousin','Bangalore, India')"><span class="av">AR</span><div><div class="nm">Anita Rao</div><div class="path">You &gt; Cousin &gt; Daughter</div></div></div>
+            </div>
+          </section>
+
+          <!-- 17 MY PROFILE -->
+          <section class="screen" id="s-myProfile">
+            <div class="status-space"></div>
+            <div class="topbar">
+              <button class="icon-btn" onclick="openDrawer()"><svg viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+              <h2>My profile</h2>
+              <span style="width:34px"></span>
+            </div>
+            <div class="body-scroll">
+              <div class="profile-head">
+                <span class="av">SN</span>
+                <div style="font-family:'Fraunces',serif; font-size:18px; font-weight:600;">Sunil Narayanan</div>
+                <div style="font-size:12px; color:var(--ink-faint); margin-top:2px;">Montgomery, New Jersey</div>
+              </div>
+              <div class="list-row" onclick="toast('Personal info would open here')"><span class="l"><svg class="leading" viewBox="0 0 24 24"><use href="#i-user"/></svg>Personal info</span><svg class="chev" viewBox="0 0 24 24"><use href="#i-back" transform="rotate(180 12 12)"/></svg></div>
+              <div class="list-row" onclick="toast('Heritage info would open here')"><span class="l"><svg class="leading" viewBox="0 0 24 24"><use href="#i-tree"/></svg>Heritage info</span><svg class="chev" viewBox="0 0 24 24"><use href="#i-back" transform="rotate(180 12 12)"/></svg></div>
+              <div class="list-row" onclick="toast('Work info would open here')"><span class="l"><svg class="leading" viewBox="0 0 24 24"><use href="#i-branch"/></svg>Work info</span><svg class="chev" viewBox="0 0 24 24"><use href="#i-back" transform="rotate(180 12 12)"/></svg></div>
+              <div class="list-row" onclick="toast('Social media links would open here')"><span class="l"><svg class="leading" viewBox="0 0 24 24"><use href="#i-link"/></svg>Social media</span><svg class="chev" viewBox="0 0 24 24"><use href="#i-back" transform="rotate(180 12 12)"/></svg></div>
+              <div class="list-row" onclick="go('privacy')"><span class="l"><svg class="leading" viewBox="0 0 24 24"><use href="#i-shield"/></svg>Privacy</span><svg class="chev" viewBox="0 0 24 24"><use href="#i-back" transform="rotate(180 12 12)"/></svg></div>
+              <div style="height:22px"></div>
+              <button class="btn btn-ghost" onclick="toast('Profile editor would open here')">Edit profile</button>
+            </div>
+            <nav class="bottomnav">
+              <button class="navitem" onclick="go('dashboard')"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>Home</button>
+              <button class="navitem" onclick="go('tree')"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg>Tree</button>
+              <button class="navitem" onclick="go('addRelative')"><span class="fab"><svg viewBox="0 0 24 24"><use href="#i-plus"/></svg></span></button>
+              <button class="navitem" onclick="go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg>Activity</button>
+              <button class="navitem active"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</button>
+            </nav>
+          </section>
+
+          <!-- 18 PRIVACY -->
+          <section class="screen" id="s-privacy">
+            <div class="status-space"></div>
+            <div class="back-row">
+              <button class="back-btn" onclick="go('myProfile')"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+              <span class="title">Privacy settings</span>
+            </div>
+            <div class="body-scroll">
+              <p style="font-size:12.5px; color:var(--ink-soft); margin:6px 0 20px;">Choose who can see each detail on your profile.</p>
+              <div class="privacy-group">
+                <h4>Email</h4>
+                <label class="radio-opt"><span class="r"></span>Public</label>
+                <label class="radio-opt"><span class="r sel"></span>Family</label>
+                <label class="radio-opt"><span class="r"></span>Direct relatives</label>
+                <label class="radio-opt"><span class="r"></span>Private</label>
+              </div>
+              <div class="privacy-group">
+                <h4>Phone</h4>
+                <label class="radio-opt"><span class="r"></span>Public</label>
+                <label class="radio-opt"><span class="r"></span>Family</label>
+                <label class="radio-opt"><span class="r sel"></span>Direct relatives</label>
+                <label class="radio-opt"><span class="r"></span>Private</label>
+              </div>
+              <div class="privacy-group">
+                <h4>Birthday</h4>
+                <label class="radio-opt"><span class="r sel"></span>Public</label>
+                <label class="radio-opt"><span class="r"></span>Family</label>
+                <label class="radio-opt"><span class="r"></span>Direct relatives</label>
+                <label class="radio-opt"><span class="r"></span>Private</label>
+              </div>
+            </div>
+          </section>
+
+        </div><!-- /.screens -->
+
+        <!-- overlay + sheet + drawer live above the screens -->
+        <div class="overlay" id="overlay" onclick="closeAllOverlays()"></div>
+
+        <div class="sheet" id="sheet-profileCard">
+          <div class="grabber"></div>
+          <div class="sheet-profile-head">
+            <span class="av" id="sheet-initials">JS</span>
+            <h3 id="sheet-name">John Smith</h3>
+            <div class="rel" id="sheet-rel">Father</div>
+            <div class="loc" id="sheet-loc">New Jersey</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="closeAllOverlays(); go('fullProfile'); fillFullProfile();">View profile</button>
+            <button class="btn btn-ghost" onclick="closeAllOverlays(); go('addRelative');">Add relative</button>
+            <button class="btn btn-ghost" onclick="closeAllOverlays(); go('treeExpanded');">View branch</button>
+          </div>
+        </div>
+
+        <div class="drawer" id="drawer-sideMenu">
+          <div class="dname">Sunil Narayanan</div>
+          <div class="demail">sunil@email.com</div>
+          <button class="drawer-item" onclick="closeAllOverlays(); go('myProfile')"><svg viewBox="0 0 24 24"><use href="#i-user"/></svg>Profile</button>
+          <button class="drawer-item" onclick="closeAllOverlays(); go('tree')"><svg viewBox="0 0 24 24"><use href="#i-tree"/></svg>Family tree</button>
+          <button class="drawer-item" onclick="closeAllOverlays(); go('notifications')"><svg viewBox="0 0 24 24"><use href="#i-bell"/></svg>Notifications</button>
+          <button class="drawer-item" onclick="closeAllOverlays(); go('privacy')"><svg viewBox="0 0 24 24"><use href="#i-shield"/></svg>Privacy</button>
+          <button class="drawer-item" onclick="closeAllOverlays(); toast('Help center would open here')"><svg viewBox="0 0 24 24"><use href="#i-help"/></svg>Help</button>
+          <button class="drawer-item" onclick="closeAllOverlays(); go('inviteConfirm')"><svg viewBox="0 0 24 24"><use href="#i-refer"/></svg>Refer family</button>
+          <button class="drawer-item signout" onclick="closeAllOverlays(); go('welcome')"><svg viewBox="0 0 24 24"><use href="#i-signout"/></svg>Sign out</button>
+        </div>
+
+        <div class="toast" id="toast">Saved</div>
+
+      </div><!-- /.phone -->
+    </div>
+    <div class="stage-hint">This is a <b>working prototype</b> — every button, tab and card is tappable and moves between real screens, not just pictures.</div>
+  </div>
+</div>
+
+<script>
+  const order = ['splash','welcome','reg1','reg2','reg3','reg4','firstHome','dashboard','tree','treeExpanded','fullProfile','addRelative','inviteConfirm','notifications','search','myProfile','privacy'];
+  let history = ['splash'];
+
+  function setActiveRail(id){
+    document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.rail-btn[data-nav="'+id+'"]').forEach(b=>{
+      if(!b.hasAttribute('data-then-sheet') && !b.hasAttribute('data-then-drawer')) b.classList.add('active');
+    });
+  }
+
+  function go(id, skipHistory){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const target = document.getElementById('s-'+id);
+    if(target) target.classList.add('active');
+    closeAllOverlays();
+    if(!skipHistory){
+      if(history[history.length-1] !== id) history.push(id);
+    }
+    setActiveRail(id);
+  }
+
+  function goBack(){
+    if(history.length > 1){
+      history.pop();
+      go(history[history.length-1], true);
+    } else {
+      go('dashboard');
+    }
+  }
+
+  function openSheet(name, rel, loc){
+    document.getElementById('sheet-name').textContent = name;
+    document.getElementById('sheet-rel').textContent = rel;
+    document.getElementById('sheet-loc').textContent = loc;
+    document.getElementById('sheet-initials').textContent = initials(name);
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('sheet-profileCard').classList.add('show');
+    window._lastPerson = {name, rel, loc};
+  }
+
+  function fillFullProfile(){
+    const p = window._lastPerson || {name:'John Smith', rel:'Father', loc:'New Jersey'};
+    document.getElementById('fp-name').textContent = p.name;
+    document.getElementById('fp-rel').textContent = p.rel;
+    document.getElementById('fp-loc').textContent = p.loc;
+    document.getElementById('fp-initials').textContent = initials(p.name);
+  }
+
+  function viewProfile(name, rel, loc){
+    window._lastPerson = {name, rel, loc};
+    go('fullProfile');
+    fillFullProfile();
+  }
+
+  function initials(name){
+    return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  }
+
+  function openDrawer(){
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('drawer-sideMenu').classList.add('show');
+  }
+
+  function closeAllOverlays(){
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('sheet-profileCard').classList.remove('show');
+    document.getElementById('drawer-sideMenu').classList.remove('show');
+  }
+
+  function pickRel(el, label){
+    document.querySelectorAll('[data-rel-opt]').forEach(b=>b.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+  function pickVia(el){
+    document.querySelectorAll('.via-opt').forEach(b=>b.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+
+  function sendInvite(){
+    toast('Invitation sent');
+    setTimeout(()=>go('notifications'), 550);
+  }
+
+  let toastTimer;
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 1700);
+  }
+
+  document.querySelectorAll('.rail-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-nav');
+      go(id);
+      if(btn.hasAttribute('data-then-sheet')){
+        setTimeout(()=>openSheet('John Smith','Father','New Jersey'), 60);
+      }
+      if(btn.hasAttribute('data-then-drawer')){
+        setTimeout(()=>openDrawer(), 60);
+      }
+    });
+  });
+
+  go('splash', true);
+</script>
+
+</body>
+</html>

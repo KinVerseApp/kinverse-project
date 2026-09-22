@@ -39,6 +39,9 @@ CREATE TABLE user_account (
   email                   CITEXT NOT NULL UNIQUE,
   auth_provider           auth_provider_enum NOT NULL,
   auth_provider_subject   TEXT,
+  -- Only set for auth_provider = 'email'. NULL for google/apple/microsoft
+  -- accounts, which authenticate via auth_provider_subject instead.
+  password_hash           TEXT,
   email_verified_at       TIMESTAMPTZ,
   status                  account_status_enum NOT NULL DEFAULT 'active',
   last_login_at           TIMESTAMPTZ,
